@@ -1,0 +1,24 @@
+{
+  "name": "proofread-transcript",
+  "version": "0.0.1",
+  "description": "A UI component for proofreading and editing transcripts",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/incharge/proofread-transcript.git"
+  },
+  "keywords": [
+    "proofread",
+    "transcript",
+    "editor"
+  ],
+  "author": "Julian Price, inCharge Ltd",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/incharge/proofread-transcript/issues"
+  },
+  "homepage": "https://github.com/incharge/proofread-transcript#readme"
+}
