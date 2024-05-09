@@ -1,4 +1,5 @@
-# proofread-transcript
+# proofread-transcript (Work in progress)
 A UI component for proofreading and editing transcripts
 
-0.0.1 Empty package created & published following https://www.freecodecamp.org/news/how-to-create-and-publish-your-first-npm-package/
+You can see the demo page for this repo at:
+https://incharge.github.io/proofread-transcript/
