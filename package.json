@@ -17,7 +17,7 @@
     "clean": "rm -rf dist es demo",
     "dev": "vite --host 0.0.0.0 --port 8888",
     "vite-build": "vite build --config vite.demo.config.js",
-    "build": "vite build --config vite.demo.config.js && vite build && tsc lib/proofread-transcript.ts --declaration --emitDeclarationOnly --outFile dist/proofread-transcript.d.ts",
+    "build": "vite build --config vite.demo.config.js && vite build",
     "preview": "vite preview",
     "test": "vitest"
   },
@@ -35,6 +35,7 @@
     "typescript": "^5.4.5",
     "vite": "^5.2.11",
     "vite-plugin-banner": "^0.7.1",
+    "vite-plugin-dts": "^3.9.1",
     "vitest": "^1.6.0"
   },
   "keywords": [

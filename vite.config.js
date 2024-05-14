@@ -3,6 +3,7 @@ const path = require('path')
 const { defineConfig } = require('vite')
 import banner from 'vite-plugin-banner'
 import pkg from './package.json'
+import dts from "vite-plugin-dts";
 
 // Now in UTC time. Format time as YYYY-MM-DDTHH:mm:ss.sssZ.
 const now = new Date().toISOString()
@@ -10,19 +11,28 @@ const now = new Date().toISOString()
 module.exports = defineConfig({
     build: {
         lib: {
-            entry: path.resolve(
-                __dirname,
-                'lib/proofread-transcript.ts'
-            ),
+            entry: [
+                path.resolve(
+                    __dirname,
+                    'lib/proofread-transcript.ts'
+                ),
+                path.resolve(
+                    __dirname,
+                    'lib/proofread-dom.ts'
+                )
+            ],
             name: 'proofread-transcript',
-            fileName: (format) =>
-                `proofread-transcript.${format}.js`,
-        },
+            fileName: (format,filename) =>
+                `${filename}.${format}.js`,
+        },  
         minify: false,
     },
     plugins: [
         banner(
             `/**\n * name: ${pkg.name}\n * version: v${pkg.version}\n * description: ${pkg.description}\n * author: ${pkg.author}\n * repository: ${pkg.repository.url}\n * build date: ${now} \n */`
         ),
+        dts({
+            insertTypesEntry: true,
+        }),
     ],
 })
