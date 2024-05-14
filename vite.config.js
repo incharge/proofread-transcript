@@ -16,12 +16,9 @@ module.exports = defineConfig({
                     __dirname,
                     'lib/proofread-transcript.ts'
                 ),
-                path.resolve(
-                    __dirname,
-                    'lib/proofread-dom.ts'
-                )
             ],
             name: 'proofread-transcript',
+            format: ['es', 'umd', 'cjs'],
             fileName: (format,filename) =>
                 `${filename}.${format}.js`,
         },  

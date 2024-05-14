@@ -1,7 +1,9 @@
 {
   "name": "proofread-transcript",
-  "version": "v0.0.2-alpha.2",
+  "version": "v0.0.2-alpha.3",
   "description": "A UI component for proofreading and editing transcripts",
+  "author": "Julian Price, inCharge Ltd",
+  "license": "ISC",
   "main": "./dist/proofread-transcript.umd.js",
   "module": "./dist/proofread-transcript.es.js",
   "unpkg": "./dist/proofread-transcript.es.js",
@@ -22,11 +24,12 @@
     "test": "vitest"
   },
   "files": [
-    "dist"
+    "dist",
+    "demo"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/incharge/proofread-transcript"
+    "url": "git+https://github.com/incharge/proofread-transcript"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.19",
@@ -43,10 +46,9 @@
     "transcript",
     "editor"
   ],
-  "author": "Julian Price, inCharge Ltd",
-  "license": "ISC",
   "bugs": {
     "url": "https://github.com/incharge/proofread-transcript/issues"
   },
-  "homepage": "https://github.com/incharge/proofread-transcript#readme"
+  "homepage": "https://github.com/incharge/proofread-transcript#readme",
+  "readme": "readme.md"
 }
