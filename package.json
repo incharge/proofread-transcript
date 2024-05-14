@@ -1,6 +1,6 @@
 {
   "name": "proofread-transcript",
-  "version": "0.0.2-alpha.1",
+  "version": "v0.0.2-alpha.2",
   "description": "A UI component for proofreading and editing transcripts",
   "main": "./dist/proofread-transcript.umd.js",
   "module": "./dist/proofread-transcript.es.js",
