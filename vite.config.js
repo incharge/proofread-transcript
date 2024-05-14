@@ -18,7 +18,7 @@ module.exports = defineConfig({
                 ),
             ],
             name: 'proofread-transcript',
-            format: ['es', 'umd', 'cjs'],
+            format: ['es', 'umd'],
             fileName: (format,filename) =>
                 `${filename}.${format}.js`,
         },  

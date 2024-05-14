@@ -1,10 +1,10 @@
 /**
  * name: proofread-transcript
- * version: v0.0.2-alpha.1
+ * version: vv0.0.2-alpha.4
  * description: A UI component for proofreading and editing transcripts
  * author: Julian Price, inCharge Ltd
- * repository: https://github.com/incharge/proofread-transcript
- * build date: 2024-05-14T15:42:00.706Z 
+ * repository: git+https://github.com/incharge/proofread-transcript
+ * build date: 2024-05-14T22:41:40.900Z 
  */
 var __defProp = Object.defineProperty;
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
@@ -115,6 +115,72 @@ class ProofreadTranscript {
     } while (!isFound);
   }
 }
+class ProofreadDom extends ProofreadTranscript {
+  constructor() {
+    super();
+    __publicField(this, "prefix");
+    __publicField(this, "handleLoadButtonClick", async (event) => {
+      if (event.type === "click") {
+        const el = document.getElementById(this.prefix + "-transcript-url");
+        if (el) {
+          await this.load(el.value);
+          let container = document.getElementById(this.prefix + "-audio");
+          container.src = this.getUrl();
+          container.addEventListener("timeupdate", this.handleTimeupdate);
+          this.updateLine();
+        }
+      }
+    });
+    __publicField(this, "handleTimeupdate", async (event) => {
+      const audio = event.target;
+      const currentTime = audio.currentTime;
+      const beforeMonlogueIndex = this.currentSection;
+      const beforeWordIndex = this.currentWord;
+      const beforeIssBetween = this.isBetween;
+      this.setCurrentTime(currentTime);
+      if (beforeMonlogueIndex != this.currentSection) {
+        this.updateLine();
+      } else if (beforeWordIndex != this.currentWord || beforeIssBetween != this.isBetween) {
+        let span = document.getElementById(this.prefix + "-word-" + String(beforeWordIndex));
+        span.style.setProperty("background-color", "", "");
+        if (!this.isBetween) {
+          span = document.getElementById(this.prefix + "-word-" + String(this.currentWord));
+          span.style.setProperty("background-color", "#FFFF00", "");
+        }
+      }
+    });
+    this.prefix = "pt";
+  }
+  attach(prefix = "pt") {
+    this.prefix = prefix;
+    const elButton = document.getElementById(prefix + "-load");
+    if (elButton) {
+      elButton.addEventListener("click", this.handleLoadButtonClick);
+    }
+  }
+  updateLine() {
+    let container;
+    container = document.getElementById(this.prefix + "-speaker");
+    container.innerText = this.getSpeaker();
+    container = document.getElementById(this.prefix + "-line");
+    if (container) {
+      while (container.firstChild) {
+        container.removeChild(container.firstChild);
+      }
+      const monologue = this.getCurrentSectionWords();
+      for (let i = 0; i < monologue.items.length; i++) {
+        let item = monologue.items[i];
+        if (item.type == "pronunciation")
+          container.innerHTML += " ";
+        let span = document.createElement("span");
+        span.textContent = item.alternatives[0].content;
+        span.id = this.prefix + "-word-" + String(i);
+        container.appendChild(span);
+      }
+    }
+  }
+}
 export {
+  ProofreadDom,
   ProofreadTranscript
 };
