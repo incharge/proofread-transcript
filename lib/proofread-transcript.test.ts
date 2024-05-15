@@ -1,4 +1,3 @@
-// sum.test.js
 import { expect, test } from 'vitest';
 import { ProofreadFilesystem, TranscriptSchema } from './proofread-transcript';
 
@@ -10,7 +9,6 @@ const testTranscript: TranscriptSchema = {
         speaker: 0,
         words: [
           {
-            type: "pronunciation",
             alternatives: [{
               confidence: 99,
               content: "Hello"
@@ -19,7 +17,6 @@ const testTranscript: TranscriptSchema = {
             end_time: 1
           },
           {
-            type: "pronunciation",
             alternatives: [{
               confidence: 99,
               content: "there"
@@ -28,7 +25,6 @@ const testTranscript: TranscriptSchema = {
             end_time: 2
           },
           {
-            type: "punctuation",
             alternatives: [{
               confidence: 99,
               content: "."

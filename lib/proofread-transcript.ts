@@ -6,7 +6,6 @@ interface TranscriptAlternative {
 }
 
 interface TranscriptWord {
-  type: string;
   alternatives: Array<TranscriptAlternative>
   start_time: number;
   end_time: number;
@@ -89,7 +88,7 @@ export class ProofreadTranscript {
       if (wordIndex < line.words.length)
         return line.words[wordIndex];
     }
-    return { type: "", alternatives: [], start_time: 0, end_time: 0 }
+    return { alternatives: [], start_time: 0, end_time: 0 }
   }
 
   getPreviousWordIndex(lineIndex: number, wordIndex: number) : [ number, number ] {
@@ -204,7 +203,7 @@ export class ProofreadTranscript {
     let isFound: boolean = false;
     do {
         word = this.getWord(lineIndex, wordIndex);
-        if ( word.type == "pronunciation" ) {
+        if ( word.end_time !== undefined ) {
           if ( time <= word.end_time ) {
             isFound = true;
             this.isBetween = time < word.start_time;
@@ -216,8 +215,8 @@ export class ProofreadTranscript {
           this.currentWord = wordIndex;
         }
         else {
-          if ( word.type == "pronunciation" ) {
-            this.lastEnd = Number(word.end_time);
+          if ( word.end_time !== undefined ) {
+            this.lastEnd = word.end_time;
           }
           [lineIndex, wordIndex] = this.getNextWordIndex(lineIndex, wordIndex);
         }
@@ -272,7 +271,7 @@ export class ProofreadDom extends ProofreadTranscript {
       const line = this.getCurrentLineWords();
       for (let wordIndex = 0; wordIndex < line.words.length; wordIndex++) {
         let word = line.words[wordIndex];
-        if (word.type == 'pronunciation')
+        if (word.start_time !== undefined)
           container.innerHTML += ' ';
         let span = document.createElement('span');
         span.textContent = word.alternatives[0].content;
