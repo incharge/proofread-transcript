@@ -123,7 +123,7 @@ export class ProofreadTranscript {
       // On the last word
       if ( this.currentLine < this.transcript.lines.length-1 ) {
         lineIndex++;
-        wordIndex = 1;
+        wordIndex = 0;
       }
       // else - Already on the last word of the last line
     }
@@ -155,7 +155,7 @@ export class ProofreadTranscript {
 
     if (lowIndex > highIndex)
       return;
-
+    
     // Find the line containing time
     while (lowIndex != highIndex) {
       middleIndex = Math.floor((lowIndex + highIndex) / 2);
@@ -171,9 +171,7 @@ export class ProofreadTranscript {
     this.currentLine = lowIndex;
 
     // Find the word containing time
-    if (line == undefined) {
-      line = this.transcript.lines[lowIndex];
-    }
+    line = this.transcript.lines[this.currentLine];
     lowIndex = 0;
     highIndex = this.rewindToWord(line, line.words.length - 1);
     if (lowIndex > highIndex)
@@ -191,7 +189,6 @@ export class ProofreadTranscript {
     this.currentWord = lowIndex;
     this.isBetween = time < line.words[lowIndex].start_time;
     this.lastEnd = this.getPreviousEndTime(this.currentLine, this.currentWord);
-    this.showState();
   }
 
   setCurrentTime(time: number) : void {
@@ -225,8 +222,6 @@ export class ProofreadTranscript {
           [lineIndex, wordIndex] = this.getNextWordIndex(lineIndex, wordIndex);
         }
     } while (!isFound);
-
-    //console.log("1 Time=" + String(time) + ", line=" + String(this.currentLine) + ", Word=" + String(this.currentWord) + ", isBetween=" + String(this.isBetween));
   }
 }
 
@@ -275,13 +270,14 @@ export class ProofreadDom extends ProofreadTranscript {
         container.removeChild(container.firstChild);
       }
       const line = this.getCurrentLineWords();
-      for (let i = 0; i < line.words.length; i++) {
-        let item = line.words[i];
-        if (item.type == 'pronunciation')
+      for (let wordIndex = 0; wordIndex < line.words.length; wordIndex++) {
+        let word = line.words[wordIndex];
+        if (word.type == 'pronunciation')
           container.innerHTML += ' ';
         let span = document.createElement('span');
-        span.textContent = item.alternatives[0].content;
-        span.id = this.prefix + '-word-' + String(i);
+        span.textContent = word.alternatives[0].content;
+        span.id = this.prefix + '-word-' + String(wordIndex);
+        span.style.setProperty('background-color', this.getBackgroundColor(this.currentLine, wordIndex),'');
         container.appendChild(span);
       }
     }
@@ -301,28 +297,57 @@ export class ProofreadDom extends ProofreadTranscript {
     }
   }
 
-  handleTimeupdate = async (event: Event) => {
-    const audio = event.target as HTMLAudioElement;
-    const currentTime: number = audio.currentTime;
+  getBackgroundColor(lineIndex: number, wordIndex: number) : string {
+    const word = this.getWord(lineIndex, wordIndex);
+    const confidence: number = word.alternatives[0].confidence;
+    if ( word.start_time === undefined || this.isBetween) {
+      // punctuation has no confidenct
+      return '';
+    }
+    else if ( this.isCurrent(lineIndex, wordIndex) )
+      return "#FFFF00";
+    else if (confidence > 0.9 ) {
+      return '';
+    }
+    else if (confidence > 0.7 ) {
+      return "#FFA500";
+    }
+    else {
+      return "#FF0000";
+    }
+  }
 
+  isCurrent(lineIndex: number, wordIndex: number) {
+    return lineIndex == this.currentLine && this.currentWord == wordIndex;
+  }
+
+  setBackgroundColor(lineIndex: number, wordIndex: number) {
+    const span = document.getElementById(this.prefix + "-word-" + String(wordIndex) ) as HTMLSpanElement;
+    span.style.setProperty('background-color', this.getBackgroundColor(lineIndex, wordIndex), '');
+  }
+
+  setCurrentTime(currentTime : number) {
     const beforeMonlogueIndex = this.currentLine;
     const beforeWordIndex = this.currentWord;
     const beforeIssBetween = this.isBetween;
 
-    this.setCurrentTime(currentTime);
+    super.setCurrentTime(currentTime);
+
     if (beforeMonlogueIndex != this.currentLine ) {
+      // The line has changed
       this.updateLine();
     }
     else if (beforeWordIndex != this.currentWord || beforeIssBetween != this.isBetween ) {
-      let span = document.getElementById(this.prefix + "-word-" + String(beforeWordIndex) ) as HTMLSpanElement;
-      span.style.setProperty('background-color','','');
-
-      if (!this.isBetween) {
-        span = document.getElementById(this.prefix + "-word-" + String(this.currentWord) ) as HTMLSpanElement;
-        span.style.setProperty('background-color','#FFFF00','');
-        //console.log( "Updated Time=" + String(audio.currentTime) + ", Line=" + String(this.currentLine)  + ", Word=" + String(this.currentWord)   + ", isBetween=" + String(this.isBetween) + ", word=" + span.innerText + ", LastEnd=" + String(this.lastEnd)  );
-      }
+      this.setBackgroundColor(beforeMonlogueIndex, beforeWordIndex);
+      //this.isBetween ?
+      this.setBackgroundColor(this.currentLine, this.currentWord);
     }
+  }
+
+  handleTimeupdate = async (event: Event) => {
+    const audio = event.target as HTMLAudioElement;
+    const currentTime: number = audio.currentTime;
+    this.setCurrentTime(currentTime);
   }
 
   handleSkipButtonClick = (event: Event) : void => {
