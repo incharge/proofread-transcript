@@ -1,6 +1,6 @@
-// This is the config file used to compile the module that will be published to NPM.
-const path = require('path')
-const { defineConfig } = require('vite')
+// This config file builds the module that is published to npm.
+import path from 'path';
+import { defineConfig } from 'vite';
 import banner from 'vite-plugin-banner'
 import pkg from './package.json'
 import dts from "vite-plugin-dts";
@@ -8,7 +8,7 @@ import dts from "vite-plugin-dts";
 // Now in UTC time. Format time as YYYY-MM-DDTHH:mm:ss.sssZ.
 const now = new Date().toISOString()
 
-module.exports = defineConfig({
+export default defineConfig({
     build: {
         lib: {
             entry: [

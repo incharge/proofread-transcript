@@ -1,5 +1,5 @@
-// This is the config file used to compile demo site that will be published to GitHub Pages.
-import { defineConfig } from 'vite'
+// This config file builds the demo site that is published to GitHub Pages.
+import { defineConfig } from 'vite';
 
 export default defineConfig({
     base: 'https://incharge.github.io/proofread-transcript/', // Set this to the GitHub Pages URL, i.e., https://<USERNAME>.github.io/<REPO>/.

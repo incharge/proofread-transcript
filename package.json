@@ -4,6 +4,7 @@
   "description": "A UI component for proofreading and editing transcripts",
   "author": "Julian Price, inCharge Ltd",
   "license": "ISC",
+  "type": "module",
   "main": "./dist/proofread-transcript.umd.js",
   "module": "./dist/proofread-transcript.es.js",
   "unpkg": "./dist/proofread-transcript.es.js",
