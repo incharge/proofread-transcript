@@ -1,6 +1,6 @@
 // sum.test.js
 import { expect, test } from 'vitest';
-import { ProofreadTranscript, TranscriptSchema } from './proofread-transcript';
+import { ProofreadFilesystem, TranscriptSchema } from './proofread-transcript';
 
 const testTranscript: TranscriptSchema = {
     url: "",
@@ -41,10 +41,7 @@ const testTranscript: TranscriptSchema = {
     ]
   }
 
-class ProofreadTest extends ProofreadTranscript {
-    showState() {
-        console.log("line=" + String(this.currentSection) + ", word=" + String(this.currentWord) + ", isBetween=" + String(this.isBetween));
-    }
+class ProofreadTest extends ProofreadFilesystem {
     testState(lineIndex: number, wordIndex: number, isBetween: boolean): boolean {
         const isMatch: boolean = this.currentSection == lineIndex
         && this.currentWord == wordIndex
@@ -56,8 +53,9 @@ class ProofreadTest extends ProofreadTranscript {
     }
 }
 
-test('Initial state', () => {
+test('Initial state', async () => {
     const proofreadTest = new ProofreadTest();
+
     // After construction, there's an empty transcript
     expect(proofreadTest.testState(0,0,true)).toBe(true);
 
@@ -87,4 +85,8 @@ test('Initial state', () => {
 
     proofreadTest.setCurrentTime(1.5);
     expect(proofreadTest.testState(0,1,false)).toBe(true);
-})
+
+    // https://incharge.github.io/thedissenter/transcript/924-icpt.json
+    proofreadTest.load("test/924-icpt.json");
+    proofreadTest.setCurrentTime(60);
+  })
