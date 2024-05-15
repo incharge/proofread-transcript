@@ -5,10 +5,10 @@ import { ProofreadFilesystem, TranscriptSchema } from './proofread-transcript';
 const testTranscript: TranscriptSchema = {
     url: "",
     speakers: ["Robin", "Charlie"],
-    monologues: [
+    lines: [
       {
         speaker: 0,
-        items: [
+        words: [
           {
             type: "pronunciation",
             alternatives: [{
@@ -43,7 +43,7 @@ const testTranscript: TranscriptSchema = {
 
 class ProofreadTest extends ProofreadFilesystem {
     testState(lineIndex: number, wordIndex: number, isBetween: boolean): boolean {
-        const isMatch: boolean = this.currentSection == lineIndex
+        const isMatch: boolean = this.currentLine == lineIndex
         && this.currentWord == wordIndex
         && this.isBetween == isBetween;
         if (!isMatch) {
