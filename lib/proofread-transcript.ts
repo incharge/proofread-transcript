@@ -5,26 +5,26 @@ interface TranscriptAlternative {
   content: string;
 }
 
-interface TranscriptItem {
+interface TranscriptWord {
   type: string;
   alternatives: Array<TranscriptAlternative>
   start_time: number;
   end_time: number;
 }
 
-interface TranscriptMonologues {
+interface TranscriptLine {
     speaker: number;
-    items: Array<TranscriptItem>;
+    words: Array<TranscriptWord>;
 }
 
 export interface TranscriptSchema {
   url: string;
   speakers: Array<string>;
-  monologues: Array<TranscriptMonologues>;
+  lines: Array<TranscriptLine>;
 }
 
 export class ProofreadTranscript {
-  protected currentSection: number;
+  protected currentLine: number;
   protected currentWord: number;
   protected isBetween: boolean;
   protected lastEnd: number;
@@ -34,39 +34,39 @@ export class ProofreadTranscript {
 
   constructor() {
     //this.loaded();
-    this.currentSection = 0;
+    this.currentLine = 0;
     this.currentWord = 0;
     this.isBetween = true;
     this.lastEnd = 0;
 
     //this.hasChanged = false;
-    this.transcript = { url: "", speakers: [], monologues: [] };
+    this.transcript = { url: "", speakers: [], lines: [] };
   }
 
-  showState() {
-    console.log("line=" + String(this.currentSection) + ", word=" + String(this.currentWord) + ", isBetween=" + String(this.isBetween) + ", laseEnd=" + this.lastEnd);
+  showState() : void {
+    console.log("line=" + String(this.currentLine) + ", word=" + String(this.currentWord) + ", isBetween=" + String(this.isBetween) + ", laseEnd=" + this.lastEnd);
   }
 
-  protected loaded() {
-    this.currentSection = 0;
+  protected loaded() : void {
+    this.currentLine = 0;
     this.currentWord = 0;
     this.isBetween = true;
     this.lastEnd = 0;
   }
 
-  load(transcript: TranscriptSchema) {
+  load(transcript: TranscriptSchema) : void {
     this.transcript = transcript;
     this.loaded();
   }
 
-  getUrl() {
+  getUrl() : string {
       return this.transcript.url;
   }
 
-  getSpeaker() {
+  getSpeaker() : string {
     let speaker: string = '';
-    if (this.currentSection < this.transcript.monologues.length) {
-      const speakerIndex = this.transcript.monologues[ this.currentSection ].speaker;
+    if (this.currentLine < this.transcript.lines.length) {
+      const speakerIndex = this.transcript.lines[ this.currentLine ].speaker;
       if (speakerIndex < this.transcript.speakers.length) {
         speaker = this.transcript.speakers[speakerIndex];
       }
@@ -74,84 +74,84 @@ export class ProofreadTranscript {
     return speaker;
   }
 
-  getCurrentSectionWords = () : TranscriptMonologues => {
-    if (this.currentSection < this.transcript.monologues.length) {
-      return this.transcript.monologues[this.currentSection];
+  getCurrentLineWords = () : TranscriptLine => {
+    if (this.currentLine < this.transcript.lines.length) {
+      return this.transcript.lines[this.currentLine];
     }
     else {
-      return { speaker: 0, items: [] };
+      return { speaker: 0, words: [] };
     }
   }
 
-  getWord(monologueIndex: number, wordIndex: number) : TranscriptItem {
-    if (monologueIndex < this.transcript.monologues.length) {
-      let monologue = this.transcript.monologues[monologueIndex];
-      if (wordIndex < monologue.items.length)
-        return monologue.items[wordIndex];
+  getWord(lineIndex: number, wordIndex: number) : TranscriptWord {
+    if (lineIndex < this.transcript.lines.length) {
+      let line = this.transcript.lines[lineIndex];
+      if (wordIndex < line.words.length)
+        return line.words[wordIndex];
     }
     return { type: "", alternatives: [], start_time: 0, end_time: 0 }
   }
 
-  getPreviousWordIndex(monologueIndex: number, wordIndex: number) : [ number, number ] {
-    // Is the previous word in the previous monologue?
+  getPreviousWordIndex(lineIndex: number, wordIndex: number) : [ number, number ] {
+    // Is the previous word in the previous line?
     if (wordIndex == 0) {
       // On the first word
-      if ( monologueIndex > 0 ) {
-        monologueIndex--;
-        wordIndex = this.transcript.monologues[monologueIndex].items.length-1;
+      if ( lineIndex > 0 ) {
+        lineIndex--;
+        wordIndex = this.transcript.lines[lineIndex].words.length-1;
       }
-      // else - Already on the first word of the first monologue
+      // else - Already on the first word of the first line
     }
     else {
       wordIndex--;
     }
-    return [ monologueIndex, wordIndex ];
+    return [ lineIndex, wordIndex ];
   }
 
-  getPreviousEndTime(monologueIndex: number, wordIndex: number) {
-    let word: TranscriptItem;
+  getPreviousEndTime(lineIndex: number, wordIndex: number) : number {
+    let word: TranscriptWord;
     do {
-      [ monologueIndex, wordIndex ] = this.getPreviousWordIndex(monologueIndex, wordIndex);
-      word = this.getWord(monologueIndex, wordIndex);
+      [ lineIndex, wordIndex ] = this.getPreviousWordIndex(lineIndex, wordIndex);
+      word = this.getWord(lineIndex, wordIndex);
     } while (word.end_time === undefined);
     return word.end_time;
   }
 
-  getNextWordIndex(monologueIndex: number, wordIndex: number) : [ number, number ] {
-    // Is the next word in the next monologue?
-    if (wordIndex >= this.transcript.monologues[monologueIndex].items.length-1) {
+  getNextWordIndex(lineIndex: number, wordIndex: number) : [ number, number ] {
+    // Is the next word in the next line?
+    if (wordIndex >= this.transcript.lines[lineIndex].words.length-1) {
       // On the last word
-      if ( this.currentSection < this.transcript.monologues.length-1 ) {
-        monologueIndex++;
+      if ( this.currentLine < this.transcript.lines.length-1 ) {
+        lineIndex++;
         wordIndex = 1;
       }
-      // else - Already on the last word of the last monologue
+      // else - Already on the last word of the last line
     }
     else {
       wordIndex++;
     }
-    return [ monologueIndex, wordIndex ];
+    return [ lineIndex, wordIndex ];
   }
 
-  rewindToWord(monologue: TranscriptMonologues, wordIndex: number) {
-    while (monologue.items[wordIndex].end_time === undefined && wordIndex > 0) {
+  rewindToWord(line: TranscriptLine, wordIndex: number) : number {
+    while (line.words[wordIndex].end_time === undefined && wordIndex > 0) {
       wordIndex--;
     }
     return wordIndex;
   }
-  forwardToWord(monologue: TranscriptMonologues, wordIndex: number) {
-    while (monologue.items[wordIndex].end_time === undefined && wordIndex < monologue.items.length) {
+  forwardToWord(line: TranscriptLine, wordIndex: number) : number {
+    while (line.words[wordIndex].end_time === undefined && wordIndex < line.words.length) {
       wordIndex++;
     }
     return wordIndex;
   }
 
-  lookupCurrentTime(time: number) {
+  lookupCurrentTime(time: number) : void {
     let lowIndex: number = 0;
-    let highIndex: number = this.transcript.monologues.length - 1;
+    let highIndex: number = this.transcript.lines.length - 1;
     let middleIndex : number;
-    let monologue: TranscriptMonologues | undefined;
-    // let word: TranscriptItem;
+    let line: TranscriptLine | undefined;
+    // let word: TranscriptWord;
 
     if (lowIndex > highIndex)
       return;
@@ -159,54 +159,54 @@ export class ProofreadTranscript {
     // Find the line containing time
     while (lowIndex != highIndex) {
       middleIndex = Math.floor((lowIndex + highIndex) / 2);
-      monologue = this.transcript.monologues[middleIndex];
-      let wordIndex = this.rewindToWord(monologue, monologue.items.length-1);
-      if ( time > monologue.items[wordIndex].end_time ) {
+      line = this.transcript.lines[middleIndex];
+      let wordIndex = this.rewindToWord(line, line.words.length-1);
+      if ( time > line.words[wordIndex].end_time ) {
         lowIndex = middleIndex + 1;
       }
       else {
         highIndex = middleIndex;
       }
     }
-    this.currentSection = lowIndex;
+    this.currentLine = lowIndex;
 
     // Find the word containing time
-    if (monologue == undefined) {
-      monologue = this.transcript.monologues[lowIndex];
+    if (line == undefined) {
+      line = this.transcript.lines[lowIndex];
     }
     lowIndex = 0;
-    highIndex = this.rewindToWord(monologue, monologue.items.length - 1);
+    highIndex = this.rewindToWord(line, line.words.length - 1);
     if (lowIndex > highIndex)
       return;
 
     while (lowIndex != highIndex) {
-      middleIndex = this.rewindToWord(monologue, Math.floor((lowIndex + highIndex) / 2));;
-      if ( time > monologue.items[middleIndex].end_time ) {
-        lowIndex = this.forwardToWord(monologue, middleIndex + 1);
+      middleIndex = this.rewindToWord(line, Math.floor((lowIndex + highIndex) / 2));;
+      if ( time > line.words[middleIndex].end_time ) {
+        lowIndex = this.forwardToWord(line, middleIndex + 1);
       }
       else {
         highIndex = middleIndex;
       }
     }
     this.currentWord = lowIndex;
-    this.isBetween = time < monologue.items[lowIndex].start_time;
-    this.lastEnd = this.getPreviousEndTime(this.currentSection, this.currentWord);
+    this.isBetween = time < line.words[lowIndex].start_time;
+    this.lastEnd = this.getPreviousEndTime(this.currentLine, this.currentWord);
     this.showState();
   }
 
-  setCurrentTime(time: number) {
+  setCurrentTime(time: number) : void {
     if ( time < this.lastEnd || time > (this.lastEnd + 10) ){
       //console.log("Time shifted to " + time);
       this.lookupCurrentTime(time);
       return;
     }
 
-    let word: TranscriptItem;
-    let monologueIndex: number = this.currentSection;
+    let word: TranscriptWord;
+    let lineIndex: number = this.currentLine;
     let wordIndex: number = this.currentWord;
     let isFound: boolean = false;
     do {
-        word = this.getWord(monologueIndex, wordIndex);
+        word = this.getWord(lineIndex, wordIndex);
         if ( word.type == "pronunciation" ) {
           if ( time <= word.end_time ) {
             isFound = true;
@@ -215,18 +215,18 @@ export class ProofreadTranscript {
         }
 
         if ( isFound ) {
-          this.currentSection = monologueIndex;
+          this.currentLine = lineIndex;
           this.currentWord = wordIndex;
         }
         else {
           if ( word.type == "pronunciation" ) {
             this.lastEnd = Number(word.end_time);
           }
-          [monologueIndex, wordIndex] = this.getNextWordIndex(monologueIndex, wordIndex);
+          [lineIndex, wordIndex] = this.getNextWordIndex(lineIndex, wordIndex);
         }
     } while (!isFound);
 
-    //console.log("1 Time=" + String(time) + ", line=" + String(this.currentSection) + ", Word=" + String(this.currentWord) + ", isBetween=" + String(this.isBetween));
+    //console.log("1 Time=" + String(time) + ", line=" + String(this.currentLine) + ", Word=" + String(this.currentWord) + ", isBetween=" + String(this.isBetween));
   }
 }
 
@@ -249,7 +249,7 @@ export class ProofreadDom extends ProofreadTranscript {
     this.loaded();
   }
 
-  attach(prefix: string = "pt") {
+  attach(prefix: string = "pt") : void {
     this.prefix = prefix;
     let element: HTMLElement | null;
     element = document.getElementById(prefix + "-load");
@@ -263,7 +263,7 @@ export class ProofreadDom extends ProofreadTranscript {
     }    
   }
 
-  updateLine() {
+  updateLine() : void {
     let container;
 
     container = document.getElementById(this.prefix + '-speaker') as HTMLHtmlElement;
@@ -274,9 +274,9 @@ export class ProofreadDom extends ProofreadTranscript {
       while (container.firstChild) {
         container.removeChild(container.firstChild);
       }
-      const monologue = this.getCurrentSectionWords();
-      for (let i = 0; i < monologue.items.length; i++) {
-        let item = monologue.items[i];
+      const line = this.getCurrentLineWords();
+      for (let i = 0; i < line.words.length; i++) {
+        let item = line.words[i];
         if (item.type == 'pronunciation')
           container.innerHTML += ' ';
         let span = document.createElement('span');
@@ -305,12 +305,12 @@ export class ProofreadDom extends ProofreadTranscript {
     const audio = event.target as HTMLAudioElement;
     const currentTime: number = audio.currentTime;
 
-    const beforeMonlogueIndex = this.currentSection;
+    const beforeMonlogueIndex = this.currentLine;
     const beforeWordIndex = this.currentWord;
     const beforeIssBetween = this.isBetween;
 
     this.setCurrentTime(currentTime);
-    if (beforeMonlogueIndex != this.currentSection ) {
+    if (beforeMonlogueIndex != this.currentLine ) {
       this.updateLine();
     }
     else if (beforeWordIndex != this.currentWord || beforeIssBetween != this.isBetween ) {
@@ -320,12 +320,12 @@ export class ProofreadDom extends ProofreadTranscript {
       if (!this.isBetween) {
         span = document.getElementById(this.prefix + "-word-" + String(this.currentWord) ) as HTMLSpanElement;
         span.style.setProperty('background-color','#FFFF00','');
-        //console.log( "Updated Time=" + String(audio.currentTime) + ", Line=" + String(this.currentSection)  + ", Word=" + String(this.currentWord)   + ", isBetween=" + String(this.isBetween) + ", word=" + span.innerText + ", LastEnd=" + String(this.lastEnd)  );
+        //console.log( "Updated Time=" + String(audio.currentTime) + ", Line=" + String(this.currentLine)  + ", Word=" + String(this.currentWord)   + ", isBetween=" + String(this.isBetween) + ", word=" + span.innerText + ", LastEnd=" + String(this.lastEnd)  );
       }
     }
   }
 
-  handleSkipButtonClick = (event: Event) => {
+  handleSkipButtonClick = (event: Event) : void => {
     if (event.type === "click") {
       const audio = document.getElementById(this.prefix + "-audio") as HTMLAudioElement;
       audio.currentTime =60;
@@ -334,7 +334,7 @@ export class ProofreadDom extends ProofreadTranscript {
 }
 
 export class ProofreadFilesystem extends ProofreadTranscript {
-  load(transcript: string | TranscriptSchema) {
+  load(transcript: string | TranscriptSchema) : void {
     if ( typeof transcript === "string") {
       this.transcript = JSON.parse(fs.readFileSync(transcript, 'utf-8'));
       this.loaded();
