@@ -9,6 +9,9 @@ function htmlEncode(input: string): string {
       .replace(/>/g, '&gt;');
 }
 
+
+type LineWord = [lineIndex: number, wordIndex: number];
+
 interface TranscriptAlternative {
   confidence: number;
   content: string;
@@ -107,7 +110,8 @@ export class ProofreadTranscript {
     return { alternatives: [], start_time: 0, end_time: 0 }
   }
 
-  getPreviousWordIndex(lineIndex: number, wordIndex: number) : [ number, number ] {
+  getPreviousWordIndex(lineWord: LineWord) : LineWord {
+    let [ lineIndex, wordIndex ] = lineWord;
     // Is the previous word in the previous line?
     if (wordIndex == 0) {
       // On the first word
@@ -122,17 +126,39 @@ export class ProofreadTranscript {
     }
     return [ lineIndex, wordIndex ];
   }
-
-  getPreviousEndTime(lineIndex: number, wordIndex: number) : number {
+  
+  // Get the end time of the given word.
+  getEndTime(lineWord: LineWord) : number {
+    let [ lineIndex, wordIndex] = lineWord;
     let word: TranscriptWord;
+    let isPrevious = false;
     do {
-      [ lineIndex, wordIndex ] = this.getPreviousWordIndex(lineIndex, wordIndex);
+      if (isPrevious) {
+        [ lineIndex, wordIndex ] = this.getPreviousWordIndex([ lineIndex, wordIndex ]);
+      }
+      isPrevious = true;
       word = this.getWord(lineIndex, wordIndex);
     } while (word.end_time === undefined);
     return word.end_time;
   }
 
-  getNextWordIndex(lineIndex: number, wordIndex: number) : [ number, number ] {
+    // Get the start time of the given word.
+    getStartTime(lineWord: LineWord) : number {
+      let [ lineIndex, wordIndex] = lineWord;
+      let word: TranscriptWord;
+      let isPrevious = false;
+      do {
+        if (isPrevious) {
+          [ lineIndex, wordIndex ] = this.getPreviousWordIndex([ lineIndex, wordIndex ]);
+        }
+        isPrevious = true;
+        word = this.getWord(lineIndex, wordIndex);
+      } while (word.start_time === undefined);
+      return word.start_time;
+    }
+  
+  getNextWordIndex(lineWord: LineWord) : [ number, number ] {
+    let [ lineIndex, wordIndex] = lineWord;
     // Is the next word in the next line?
     if (wordIndex >= this.transcript.lines[lineIndex].words.length-1) {
       // On the last word
@@ -203,7 +229,8 @@ export class ProofreadTranscript {
     }
     this.currentWord = lowIndex;
     this.isBetween = time < line.words[lowIndex].start_time;
-    this.lastEnd = this.getPreviousEndTime(this.currentLine, this.currentWord);
+    //this.lastEnd = this.getPreviousEndTime(this.currentLine, this.currentWord);
+    this.lastEnd = this.getEndTime(this.getPreviousWordIndex([this.currentLine, this.currentWord]));
   }
 
   // Set the current line/word etc for the given time
@@ -236,7 +263,7 @@ export class ProofreadTranscript {
           if ( word.end_time !== undefined ) {
             this.lastEnd = word.end_time;
           }
-          [lineIndex, wordIndex] = this.getNextWordIndex(lineIndex, wordIndex);
+          [lineIndex, wordIndex] = this.getNextWordIndex([lineIndex, wordIndex]);
         }
     } while (!isFound);
     return false;
@@ -364,6 +391,8 @@ export class ProofreadDom extends ProofreadTranscript {
     this.attachButton("-skip-to-offset", this.handleSkipButtonClick);
     this.attachButton("-prev-line", this.handleLineButton);
     this.attachButton("-next-line", this.handleLineButton);
+    this.attachButton("-rw-btn", this.handeRwFfButton);
+    this.attachButton("-ff-btn", this.handeRwFfButton);
 
     // Set the URL in the URL edit box, if any
     if (url) {
@@ -375,9 +404,15 @@ export class ProofreadDom extends ProofreadTranscript {
     }
 
     // Set the select onchange handler
-    element = document.getElementById(this.prefix + "-select-line") as HTMLSelectElement;
+    element = document.getElementById(this.prefix + "-select-line");
     if (element) {
       element.addEventListener("change", this.handleSelectLine);
+    }
+
+    // Set the word click handler
+    element = document.getElementById(this.prefix + "-line");
+    if (element) {
+      element.addEventListener("click", this.handleClickWord);
     }
   }
 
@@ -488,6 +523,7 @@ export class ProofreadDom extends ProofreadTranscript {
     //console.log(optionElement?.value);
   }
 
+  // Go to the previous/next line
   handleLineButton = (event: Event) : void => {
     const buttonElement:HTMLElement | null  = event.target as HTMLElement;
 
@@ -501,6 +537,34 @@ export class ProofreadDom extends ProofreadTranscript {
       //selectElement.selectedIndex = lineIndex + offset;
       this.skipTo(word.start_time);
     }
+  }
+
+  // Rewind / fast-forward
+  handeRwFfButton = (event: Event) : void => {
+    const buttonElement:HTMLElement | null  = event.target as HTMLElement;
+    const audioElement: HTMLAudioElement | null = document.getElementById(this.prefix + "-audio") as HTMLAudioElement;
+    if (audioElement) {
+      const isRw = buttonElement.id == this.prefix + "-rw-btn";
+      const rwInputElement = document.getElementById(this.prefix + (isRw ? "-rw-edit" :"-ff-edit")) as HTMLInputElement;
+      //console.log(rwInputElement.value);
+      const time = audioElement.currentTime + parseInt(rwInputElement.value) * (isRw ? -1 : 1);
+      this.skipTo(time);
+    }
+  }
+
+  wordIdToWordIndex(wordId: string): number {
+    return parseInt(wordId.substring(this.prefix.length + 6));
+  }
+
+  // Go to the clicked word
+  handleClickWord = (event: Event) : void => {
+    const element:HTMLElement | null  = event.target as HTMLElement;
+    let wordIndex = this.wordIdToWordIndex(element.id);
+    if (isNaN(wordIndex)) {
+      wordIndex = this.transcript.lines[this.currentLine].words.length -1;
+    }
+
+    this.skipTo( this.getStartTime([this.currentLine, wordIndex]));
   }
 }
 
