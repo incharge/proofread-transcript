@@ -43,7 +43,7 @@ class ProofreadTest extends ProofreadFilesystem {
         && this.currentWord == wordIndex
         && this.isBetween == isBetween;
         if (!isMatch) {
-            this.showState();
+            this.logState();
         }
         return isMatch;
     }
