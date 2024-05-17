@@ -5,4 +5,6 @@ import { ProofreadDom } from '../lib/proofread-transcript'
 import './style.pcss';
 
 const proofreadDom = new ProofreadDom();
-proofreadDom.attach();
+const queryString = window.location.search;
+const urlParams = new URLSearchParams(queryString);
+proofreadDom.attach(urlParams.get("url"));

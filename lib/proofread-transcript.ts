@@ -53,6 +53,7 @@ export class ProofreadTranscript {
     this.lastEnd = 0;
   }
 
+  // Set the transcript by passing in a TranscriptSchema object.  Useful for testing.
   load(transcript: TranscriptSchema) : void {
     this.transcript = transcript;
     this.loaded();
@@ -190,11 +191,13 @@ export class ProofreadTranscript {
     this.lastEnd = this.getPreviousEndTime(this.currentLine, this.currentWord);
   }
 
-  setCurrentTime(time: number) : void {
+  // Set the current line/word etc for the given time
+  // Returns true if it was necessary to do a full search
+  setCurrentTime(time: number) : boolean {
     if ( time < this.lastEnd || time > (this.lastEnd + 10) ){
       //console.log("Time shifted to " + time);
       this.lookupCurrentTime(time);
-      return;
+      return true;
     }
 
     let word: TranscriptWord;
@@ -221,6 +224,7 @@ export class ProofreadTranscript {
           [lineIndex, wordIndex] = this.getNextWordIndex(lineIndex, wordIndex);
         }
     } while (!isFound);
+    return false;
   }
 }
 
@@ -232,29 +236,60 @@ export class ProofreadDom extends ProofreadTranscript {
     this.prefix = "pt";
   }
 
+  // Set the transcript by passing in the URL of a transcript file or a TranscriptSchema object.
   async load(transcript: string | TranscriptSchema) {
     if ( typeof transcript === "string") {
+      // Load from URL
       const response = await window.fetch(transcript);
       this.transcript = await response.json();
     }
     else {
+      // Load from TranscriptSchema
       super.load(transcript);
     }
     this.loaded();
-  }
 
-  attach(prefix: string = "pt") : void {
+    // Set the transcript's audio url (if any) in the audio player (if any)
+    const url: string = this.getUrl();
+    if (url != '') {
+      const audioElement = document.getElementById(this.prefix + "-audio") as HTMLAudioElement;
+      if (audioElement) {
+        audioElement.src = url;
+        this.updateLine();
+      }
+  }
+}
+
+  attach(url: string | null, prefix: string = "pt") : void {
     this.prefix = prefix;
     let element: HTMLElement | null;
+
+    // Setup the load button handler
     element = document.getElementById(prefix + "-load");
     if (element) {
       element.addEventListener("click", this.handleLoadButtonClick)
     }    
 
+    // Setup the skip button handler
     element = document.getElementById(prefix + "-skip");
     if (element) {
       element.addEventListener("click", this.handleSkipButtonClick)
-    }    
+    }
+
+    element = document.getElementById(this.prefix + "-audio") as HTMLAudioElement;
+    if ( element ) {
+      element.addEventListener("timeupdate", this.handleTimeupdate);
+      // Set url value, if provided
+      if (url) {
+        // Set the URL in the URL edit box, if any
+        element = document.getElementById(prefix + "-transcript-url");
+        if (element) {
+          (element as HTMLInputElement).value = url;
+        }
+        // Load the URL
+        this.load(url);
+      }
+    }
   }
 
   updateLine() : void {
@@ -287,11 +322,6 @@ export class ProofreadDom extends ProofreadTranscript {
       const el = document.getElementById(this.prefix + "-transcript-url") as HTMLInputElement;
       if (el) {
         await this.load(el.value);
-        let container = document.getElementById(this.prefix + "-audio") as HTMLAudioElement;
-        container.src = this.getUrl();
-        container.addEventListener("timeupdate", this.handleTimeupdate);
-
-        this.updateLine();
       }
     }
   }
@@ -325,22 +355,34 @@ export class ProofreadDom extends ProofreadTranscript {
     span.style.setProperty('background-color', this.getBackgroundColor(lineIndex, wordIndex), '');
   }
 
-  setCurrentTime(currentTime : number) {
+  setCurrentTime(currentTime : number) : boolean {
     const beforeMonlogueIndex = this.currentLine;
     const beforeWordIndex = this.currentWord;
     const beforeIssBetween = this.isBetween;
 
-    super.setCurrentTime(currentTime);
+    var timeAtStart = Date.now()
+    const isSeek = super.setCurrentTime(currentTime);
+    var timeAfterSync = Date.now()
 
     if (beforeMonlogueIndex != this.currentLine ) {
-      // The line has changed
+      // The line has changed.
+      // Update the displayed text.
       this.updateLine();
     }
     else if (beforeWordIndex != this.currentWord || beforeIssBetween != this.isBetween ) {
+      // Moved to a different work in the same line.
+      // Set the background colour
       this.setBackgroundColor(beforeMonlogueIndex, beforeWordIndex);
       //this.isBetween ?
       this.setBackgroundColor(this.currentLine, this.currentWord);
     }
+    var timeAfterDom = Date.now()
+
+    if (isSeek) {
+      console.log(`Sync took ${timeAfterSync-timeAtStart} and DOM took ${timeAfterDom-timeAtStart}`);
+    }
+  
+    return isSeek;
   }
 
   handleTimeupdate = async (event: Event) => {
@@ -352,7 +394,7 @@ export class ProofreadDom extends ProofreadTranscript {
   handleSkipButtonClick = (event: Event) : void => {
     if (event.type === "click") {
       const audio = document.getElementById(this.prefix + "-audio") as HTMLAudioElement;
-      audio.currentTime =60;
+      audio.currentTime = 1600; // 27:19
     }
   }
 }
