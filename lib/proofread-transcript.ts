@@ -1,5 +1,14 @@
 import * as fs from 'fs'
 
+type EventHandler = (event: Event) => void;
+
+function htmlEncode(input: string): string {
+  return input
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+}
+
 interface TranscriptAlternative {
   confidence: number;
   content: string;
@@ -68,15 +77,16 @@ export class ProofreadTranscript {
       return this.transcript.url;
   }
 
-  getSpeaker() : string {
-    let speaker: string = '';
-    if (this.currentLine < this.transcript.lines.length) {
-      const speakerIndex = this.transcript.lines[ this.currentLine ].speaker;
-      if (speakerIndex < this.transcript.speakers.length) {
-        speaker = this.transcript.speakers[speakerIndex];
+  // Get the name of the speaker of the given line
+  getSpeakerName(lineIndex: number = this.currentLine) : string {
+    let speakerName: string = '';
+    if (lineIndex >= 0 && lineIndex < this.transcript.lines.length) {
+      const speakerIndex = this.transcript.lines[ lineIndex ].speaker;
+      if (speakerIndex >= 0 && speakerIndex < this.transcript.speakers.length) {
+        speakerName = this.transcript.speakers[speakerIndex];
       }
     }
-    return speaker;
+    return speakerName;
   }
 
   getCurrentLineWords = () : TranscriptLine => {
@@ -262,21 +272,49 @@ export class ProofreadDom extends ProofreadTranscript {
   
   constructor() {
     super();
-    this.prefix = "pt";
+    this.prefix = "ic";
   }
+
+  secondsToHms(time: number): string {
+    let from: number;
+    if (time < 60*60){
+      from = 14;
+    }
+    else if (time < 60*60*10) {
+      from = 12;
+    }
+    else {
+      from = 11;
+    }
+
+    return new Date(Math.floor(time) * 1000).toISOString().substring(from, 19)
+  }
+
+  // secondsToHms(time: number): string {
+  //   let remainder: number = Math.floor(time);
+  //   let timeHMS: string = "";
+  //   while (remainder > 0 || timeHMS.length == 0) {
+  //     let unit: number = remainder % 60;
+  //     remainder = Math.floor(remainder / 60);
+  //     timeHMS = (unit <= 9 ? "0" : "") + String(unit) + (timeHMS.length > 0 ? ":" + timeHMS : "");
+  //   }
+  //   return timeHMS;
+  // }
 
   // Set the transcript by passing in the URL of a transcript file or a TranscriptSchema object.
   async load(transcript: string | TranscriptSchema) {
     if ( typeof transcript === "string") {
-      // Load from URL
+      // Load from URL using the DOM
       const response = await window.fetch(transcript);
       this.transcript = await response.json();
     }
     else {
-      // Load from TranscriptSchema
+      // Load from TranscriptSchema object
       super.load(transcript);
     }
     this.loaded();
+
+    this.updateLine();
 
     // Set the transcript's audio url (if any) in the audio player (if any)
     const url: string = this.getUrl();
@@ -284,50 +322,74 @@ export class ProofreadDom extends ProofreadTranscript {
       const audioElement = document.getElementById(this.prefix + "-audio") as HTMLAudioElement;
       if (audioElement) {
         audioElement.src = url;
-        this.updateLine();
       }
-  }
-}
+    }
 
-  attach(url: string | null, prefix: string = "pt") : void {
+    // Set the line select
+    const selectElement: HTMLSelectElement | null = document.getElementById(this.prefix + "-select-line") as HTMLSelectElement;
+    if ( selectElement ) {
+      let html: string = "";
+      for (let lineIndex = 0; lineIndex < this.transcript.lines.length; lineIndex++) {
+        const offset: number = this.transcript.lines[lineIndex].words[0].start_time;
+        html += `<option value="${offset}">${this.secondsToHms(offset)} ${htmlEncode(this.getSpeakerName(lineIndex))}</option>`;
+      }
+      selectElement.innerHTML = html;
+    } 
+  }
+  
+  attachButton(id: string, eventHandler: EventHandler) : void {
+    // Setup the load button handler
+    let element: HTMLElement | null = document.getElementById(this.prefix + id);
+    if (element) {
+      element.addEventListener("click", eventHandler);
+    }    
+  }
+
+  attach(url: string | null, prefix: string = "ic") : void {
     this.prefix = prefix;
     let element: HTMLElement | null;
 
-    // Setup the load button handler
-    element = document.getElementById(prefix + "-load");
-    if (element) {
-      element.addEventListener("click", this.handleLoadButtonClick)
-    }    
-
-    // Setup the skip button handler
-    element = document.getElementById(prefix + "-skip");
-    if (element) {
-      element.addEventListener("click", this.handleSkipButtonClick)
-    }
-
+    // Load the audo first, so it can load asynchronously while the rest of the attaching happens
     element = document.getElementById(this.prefix + "-audio") as HTMLAudioElement;
     if ( element ) {
       element.addEventListener("timeupdate", this.handleTimeupdate);
       // Set url value, if provided
       if (url) {
-        // Set the URL in the URL edit box, if any
-        element = document.getElementById(prefix + "-transcript-url");
-        if (element) {
-          (element as HTMLInputElement).value = url;
-        }
         // Load the URL
         this.load(url);
       }
     }
+
+    this.attachButton("-load", this.handleLoadButtonClick);
+    this.attachButton("-skip-to-offset", this.handleSkipButtonClick);
+    this.attachButton("-prev-line", this.handleLineButton);
+    this.attachButton("-next-line", this.handleLineButton);
+
+    // Set the URL in the URL edit box, if any
+    if (url) {
+      element = document.getElementById(prefix + "-transcript-url");
+      if (element) {
+        //console.log(`url=${url}`);
+        (element as HTMLInputElement).value = url;
+      }
+    }
+
+    // Set the select onchange handler
+    element = document.getElementById(this.prefix + "-select-line") as HTMLSelectElement;
+    if (element) {
+      element.addEventListener("change", this.handleSelectLine);
+    }
   }
 
+  // The current line has changed. Update the UI accordingly
   updateLine() : void {
     let container: HTMLElement | null;
     //this.logState();
+
     // Set the speaker name in the speaker element, if any
     container = document.getElementById(this.prefix + '-speaker') as HTMLHtmlElement;
     if (container) {
-      container.innerText = this.getSpeaker();
+      container.innerText = this.getSpeakerName();
     }
 
     // Set the current line in the line element
@@ -344,9 +406,14 @@ export class ProofreadDom extends ProofreadTranscript {
           backgroundColor = ` style='background-color: ${backgroundColor}'`;
         }
         html += ( word.start_time !== undefined ? ' ' : '')
-          + `<span id="${this.prefix}-word-${wordIndex}"${backgroundColor}>${word.alternatives[0].content}</span>`
+          + `<span id="${this.prefix}-word-${wordIndex}"${backgroundColor}>${htmlEncode(word.alternatives[0].content)}</span>`
       }
       container.innerHTML = html;
+    }
+
+    const selectElement: HTMLSelectElement | null = document.getElementById(this.prefix + "-select-line") as HTMLSelectElement;
+    if (selectElement) {  
+      selectElement.selectedIndex = this.currentLine;
     }
   }
 
@@ -389,7 +456,7 @@ export class ProofreadDom extends ProofreadTranscript {
     //if (isSeek) {
     //  console.log(`Sync took ${timeAfterSync-timeAtStart} and DOM took ${timeAfterDom-timeAtStart}`);
     //}
-  
+      
     return isSeek;
   }
 
@@ -399,10 +466,40 @@ export class ProofreadDom extends ProofreadTranscript {
     this.setCurrentTime(currentTime);
   }
 
+  skipTo(offset: number) {
+    offset = isNaN(offset) ? 0 : offset;
+    //console.log(`Skip to ${offset}`)
+    const audioElement: HTMLAudioElement | null = document.getElementById(this.prefix + "-audio") as HTMLAudioElement;
+    if (audioElement) {
+      audioElement.currentTime = offset;
+    }
+  }
+
   handleSkipButtonClick = (event: Event) : void => {
     if (event.type === "click") {
-      const audio = document.getElementById(this.prefix + "-audio") as HTMLAudioElement;
-      audio.currentTime = 1600; // 27:19
+      const offsetInput: HTMLInputElement | null = document.getElementById(this.prefix + "-offset") as HTMLInputElement;
+      this.skipTo(parseInt(offsetInput?.value));
+    }
+  }
+
+  handleSelectLine = (event: Event) : void => {
+    const optionElement = event.target as HTMLOptionElement;
+    this.skipTo(parseInt(optionElement?.value));
+    //console.log(optionElement?.value);
+  }
+
+  handleLineButton = (event: Event) : void => {
+    const buttonElement:HTMLElement | null  = event.target as HTMLElement;
+
+    const lineIndex = this.currentLine + (buttonElement.id == this.prefix + "-prev-line" ? -1 : +1);
+    if (lineIndex >= 0 && lineIndex < this.transcript.lines.length) {
+      const word: TranscriptWord = this.getWord(lineIndex, 0);
+      //console.log(`to line ${lineIndex}, starting at ${word.start_time}`);
+      
+      // Get the start time of the line's first word
+      //const time = this.transcript.lines[selectElement.selectedIndex + (buttonElement.id == this.prefix + "-prev-line" ? -1 : +1)].words[0].start_time;
+      //selectElement.selectedIndex = lineIndex + offset;
+      this.skipTo(word.start_time);
     }
   }
 }

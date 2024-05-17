@@ -14,15 +14,12 @@
     <div class="mx-auto max-w-screen-lg p-6 lg:p-8 bg-gradient-to-br from-white to-slate-200 rounded shadow-2xl">
       <div class="mx-auto lg:mx-0">
         <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl mb-6">Proofread a Transcript</h1>
-        <div id="pt-parent">
-          URL:
-          <input type="edit" id="pt-transcript-url" value=""/><br/>
-          <button id="pt-load">Load transcript</button><br/>
-          <button id="pt-skip">Skip</button><br/>
-        </div>
-        <audio id="pt-audio" controls src=""></audio>
-        <div id="pt-speaker"><!-- The container for the name of the current speaker --></div>
-        <div id="pt-line"><!-- The container for the transcript --></div>
+        <input type="edit" id="ic-transcript-url" class="ic-edit"/>&nbsp;<button id="ic-load" class="ic-button">Load transcript</button><br/>
+        <input type="edit" id="ic-offset" class="ic-edit"/>&nbsp;<button id="ic-skip-to-offset" class="ic-button">Skip to (seconds)</button><br/>
+        <button id="ic-prev-line" class="ic-button">Previous line</button>&nbsp;<select id="ic-select-line" class="ic-select"><option>Current line...</option>&nbsp;</select><button id="ic-next-line" class="ic-button">Next line</button>
+        <audio id="ic-audio" style="width: 100%" controls src=""></audio>
+        <div id="ic-speaker"><!-- The container for the name of the current speaker --></div>
+        <div id="ic-line"><!-- The container for the transcript --></div>
       </div>
     </div>
   </div>
