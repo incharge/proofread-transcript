@@ -42,8 +42,13 @@ export class ProofreadTranscript {
     this.transcript = { url: "", speakers: [], lines: [] };
   }
 
-  showState() : void {
-    console.log("line=" + String(this.currentLine) + ", word=" + String(this.currentWord) + ", isBetween=" + String(this.isBetween) + ", laseEnd=" + this.lastEnd);
+  logState() : void {
+    console.log(`State: line=${this.currentLine}, word=${this.currentWord}, isBetween=${this.isBetween}, lastEnd=${this.lastEnd}`);
+  }
+
+  logWord(lineIndex: number, wordIndex: number) : void {
+    const word: TranscriptWord = this.getWord(lineIndex, wordIndex);
+    console.log(`Word: ${lineIndex}-${wordIndex} '${word.alternatives[0].content}' colour=${this.getBackgroundColor(lineIndex, wordIndex)}`)
   }
 
   protected loaded() : void {
@@ -226,6 +231,30 @@ export class ProofreadTranscript {
     } while (!isFound);
     return false;
   }
+
+  isCurrent(lineIndex: number, wordIndex: number) {
+    return lineIndex == this.currentLine && this.currentWord == wordIndex;
+  }
+
+  getBackgroundColor(lineIndex: number, wordIndex: number) : string {
+    const word = this.getWord(lineIndex, wordIndex);
+    const confidence: number = word.alternatives[0].confidence;
+    if ( word.start_time === undefined) {
+      // punctuation has no confidence property
+      return '';
+    }
+    else if (this.isCurrent(lineIndex, wordIndex))
+      return "#FFFF33";
+    else if (confidence > 0.9 ) {
+      return '';
+    }
+    else if (confidence > 0.7 ) {
+      return "#FFA566";
+    }
+    else {
+      return "#FF8888";
+    }
+  }
 }
 
 export class ProofreadDom extends ProofreadTranscript {
@@ -293,27 +322,31 @@ export class ProofreadDom extends ProofreadTranscript {
   }
 
   updateLine() : void {
-    let container;
-
+    let container: HTMLElement | null;
+    //this.logState();
+    // Set the speaker name in the speaker element, if any
     container = document.getElementById(this.prefix + '-speaker') as HTMLHtmlElement;
-    container.innerText = this.getSpeaker();
+    if (container) {
+      container.innerText = this.getSpeaker();
+    }
 
+    // Set the current line in the line element
     container = document.getElementById(this.prefix + '-line');
     if (container) {
-      while (container.firstChild) {
-        container.removeChild(container.firstChild);
-      }
-      const line = this.getCurrentLineWords();
+      const line: TranscriptLine = this.getCurrentLineWords();
+      let html: string = '';
+      let backgroundColor: string;
       for (let wordIndex = 0; wordIndex < line.words.length; wordIndex++) {
-        let word = line.words[wordIndex];
-        if (word.start_time !== undefined)
-          container.innerHTML += ' ';
-        let span = document.createElement('span');
-        span.textContent = word.alternatives[0].content;
-        span.id = this.prefix + '-word-' + String(wordIndex);
-        span.style.setProperty('background-color', this.getBackgroundColor(this.currentLine, wordIndex),'');
-        container.appendChild(span);
+        let word: TranscriptWord = line.words[wordIndex];
+        //console.log(`${this.currentLine}-${wordIndex} '${word.alternatives[0].content}' colour=${this.getBackgroundColor(this.currentLine, wordIndex)}`)
+        backgroundColor = this.getBackgroundColor(this.currentLine, wordIndex);
+        if (backgroundColor != "") {
+          backgroundColor = ` style='background-color: ${backgroundColor}'`;
+        }
+        html += ( word.start_time !== undefined ? ' ' : '')
+          + `<span id="${this.prefix}-word-${wordIndex}"${backgroundColor}>${word.alternatives[0].content}</span>`
       }
+      container.innerHTML = html;
     }
   }
 
@@ -326,30 +359,6 @@ export class ProofreadDom extends ProofreadTranscript {
     }
   }
 
-  getBackgroundColor(lineIndex: number, wordIndex: number) : string {
-    const word = this.getWord(lineIndex, wordIndex);
-    const confidence: number = word.alternatives[0].confidence;
-    if ( word.start_time === undefined || this.isBetween) {
-      // punctuation has no confidenct
-      return '';
-    }
-    else if ( this.isCurrent(lineIndex, wordIndex) )
-      return "#FFFF00";
-    else if (confidence > 0.9 ) {
-      return '';
-    }
-    else if (confidence > 0.7 ) {
-      return "#FFA500";
-    }
-    else {
-      return "#FF0000";
-    }
-  }
-
-  isCurrent(lineIndex: number, wordIndex: number) {
-    return lineIndex == this.currentLine && this.currentWord == wordIndex;
-  }
-
   setBackgroundColor(lineIndex: number, wordIndex: number) {
     const span = document.getElementById(this.prefix + "-word-" + String(wordIndex) ) as HTMLSpanElement;
     span.style.setProperty('background-color', this.getBackgroundColor(lineIndex, wordIndex), '');
@@ -360,9 +369,9 @@ export class ProofreadDom extends ProofreadTranscript {
     const beforeWordIndex = this.currentWord;
     const beforeIssBetween = this.isBetween;
 
-    var timeAtStart = Date.now()
+    //var timeAtStart = Date.now()
     const isSeek = super.setCurrentTime(currentTime);
-    var timeAfterSync = Date.now()
+    //var timeAfterSync = Date.now()
 
     if (beforeMonlogueIndex != this.currentLine ) {
       // The line has changed.
@@ -370,17 +379,16 @@ export class ProofreadDom extends ProofreadTranscript {
       this.updateLine();
     }
     else if (beforeWordIndex != this.currentWord || beforeIssBetween != this.isBetween ) {
-      // Moved to a different work in the same line.
+      // Moved to a different word in the same line.
       // Set the background colour
       this.setBackgroundColor(beforeMonlogueIndex, beforeWordIndex);
-      //this.isBetween ?
       this.setBackgroundColor(this.currentLine, this.currentWord);
     }
-    var timeAfterDom = Date.now()
+    //var timeAfterDom = Date.now()
 
-    if (isSeek) {
-      console.log(`Sync took ${timeAfterSync-timeAtStart} and DOM took ${timeAfterDom-timeAtStart}`);
-    }
+    //if (isSeek) {
+    //  console.log(`Sync took ${timeAfterSync-timeAtStart} and DOM took ${timeAfterDom-timeAtStart}`);
+    //}
   
     return isSeek;
   }
