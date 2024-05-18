@@ -12,15 +12,17 @@ function htmlEncode(input: string): string {
 
 type LineWord = [lineIndex: number, wordIndex: number];
 
-interface TranscriptAlternative {
-  confidence: number;
-  content: string;
-}
+// interface TranscriptAlternative {
+//   confidence: number;
+//   content: string;
+// }
 
 interface TranscriptWord {
-  alternatives: Array<TranscriptAlternative>
-  start_time: number;
+  //alternatives: Array<TranscriptAlternative>
+  confidence: number;
+  content: string;
   end_time: number;
+  start_time: number;
 }
 
 interface TranscriptLine {
@@ -60,7 +62,7 @@ export class ProofreadTranscript {
 
   logWord(lineIndex: number, wordIndex: number) : void {
     const word: TranscriptWord = this.getWord(lineIndex, wordIndex);
-    console.log(`Word: ${lineIndex}-${wordIndex} '${word.alternatives[0].content}' colour=${this.getBackgroundColor(lineIndex, wordIndex)}`)
+    console.log(`Word: ${lineIndex}-${wordIndex} '${word.content}' colour=${this.getBackgroundColor(lineIndex, wordIndex)}`)
   }
 
   protected loaded() : void {
@@ -92,12 +94,13 @@ export class ProofreadTranscript {
     return speakerName;
   }
 
-  getCurrentLineWords = () : TranscriptLine => {
+  // Get the words of the current line
+  getCurrentLineWords = () : Array<TranscriptWord> => {
     if (this.currentLine < this.transcript.lines.length) {
-      return this.transcript.lines[this.currentLine];
+      return this.transcript.lines[this.currentLine].words;
     }
     else {
-      return { speaker: 0, words: [] };
+      return [];
     }
   }
 
@@ -107,7 +110,7 @@ export class ProofreadTranscript {
       if (wordIndex < line.words.length)
         return line.words[wordIndex];
     }
-    return { alternatives: [], start_time: 0, end_time: 0 }
+    return { confidence: 0, content: "", start_time: 0, end_time: 0 }
   }
 
   getPreviousWordIndex(lineWord: LineWord) : LineWord {
@@ -142,20 +145,20 @@ export class ProofreadTranscript {
     return word.end_time;
   }
 
-    // Get the start time of the given word.
-    getStartTime(lineWord: LineWord) : number {
-      let [ lineIndex, wordIndex] = lineWord;
-      let word: TranscriptWord;
-      let isPrevious = false;
-      do {
-        if (isPrevious) {
-          [ lineIndex, wordIndex ] = this.getPreviousWordIndex([ lineIndex, wordIndex ]);
-        }
-        isPrevious = true;
-        word = this.getWord(lineIndex, wordIndex);
-      } while (word.start_time === undefined);
-      return word.start_time;
-    }
+  // Get the start time of the given word.
+  getStartTime(lineWord: LineWord) : number {
+    let [ lineIndex, wordIndex] = lineWord;
+    let word: TranscriptWord;
+    let isPrevious = false;
+    do {
+      if (isPrevious) {
+        [ lineIndex, wordIndex ] = this.getPreviousWordIndex([ lineIndex, wordIndex ]);
+      }
+      isPrevious = true;
+      word = this.getWord(lineIndex, wordIndex);
+    } while (word.start_time === undefined);
+    return word.start_time;
+  }
   
   getNextWordIndex(lineWord: LineWord) : [ number, number ] {
     let [ lineIndex, wordIndex] = lineWord;
@@ -275,14 +278,16 @@ export class ProofreadTranscript {
 
   getBackgroundColor(lineIndex: number, wordIndex: number) : string {
     const word = this.getWord(lineIndex, wordIndex);
-    const confidence: number = word.alternatives[0].confidence;
-    if ( word.start_time === undefined) {
+    let confidence: number = word.confidence;
+    if ( confidence === undefined) {
       // punctuation has no confidence property
       return '';
     }
     else if (this.isCurrent(lineIndex, wordIndex))
+      // Higlight the current word
       return "#FFFF33";
-    else if (confidence > 0.9 ) {
+    else if (confidence > 0.99 ) {
+      // Normal confidence has the default background color
       return '';
     }
     else if (confidence > 0.7 ) {
@@ -430,18 +435,18 @@ export class ProofreadDom extends ProofreadTranscript {
     // Set the current line in the line element
     container = document.getElementById(this.prefix + '-line');
     if (container) {
-      const line: TranscriptLine = this.getCurrentLineWords();
+      const words: Array<TranscriptWord> = this.getCurrentLineWords();
       let html: string = '';
       let backgroundColor: string;
-      for (let wordIndex = 0; wordIndex < line.words.length; wordIndex++) {
-        let word: TranscriptWord = line.words[wordIndex];
-        //console.log(`${this.currentLine}-${wordIndex} '${word.alternatives[0].content}' colour=${this.getBackgroundColor(this.currentLine, wordIndex)}`)
+      for (let wordIndex = 0; wordIndex < words.length; wordIndex++) {
+        let word: TranscriptWord = words[wordIndex];
+        //console.log(`${this.currentLine}-${wordIndex} '${word.content}' colour=${this.getBackgroundColor(this.currentLine, wordIndex)}`)
         backgroundColor = this.getBackgroundColor(this.currentLine, wordIndex);
         if (backgroundColor != "") {
           backgroundColor = ` style='background-color: ${backgroundColor}'`;
         }
         html += ( word.start_time !== undefined ? ' ' : '')
-          + `<span id="${this.prefix}-word-${wordIndex}"${backgroundColor}>${htmlEncode(word.alternatives[0].content)}</span>`
+          + `<span id="${this.prefix}-word-${wordIndex}"${backgroundColor}>${htmlEncode(word.content)}</span>`
       }
       container.innerHTML = html;
     }
