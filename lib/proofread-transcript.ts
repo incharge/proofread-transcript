@@ -290,11 +290,14 @@ export class ProofreadTranscript {
       // Normal confidence has the default background color
       return '';
     }
-    else if (confidence > 0.7 ) {
-      return "#FFA566";
-    }
     else {
-      return "#FF8888";
+      // Calculate a color that represents the confidence level 
+      const minimumColor = 99;
+      // Convert confidence into a color number in the range 0 to 255
+      confidence = Math.floor(confidence * (256-minimumColor)) + minimumColor;
+      // Convert confidence into a 2 digit hex color value
+      const color: string = (confidence < 16 ? "0" : "") + confidence.toString(16);
+      return "#" + "FF" + color + color;
     }
   }
 }
