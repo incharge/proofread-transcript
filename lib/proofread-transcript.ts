@@ -1,4 +1,5 @@
 import * as fs from 'fs'
+import { secondsToHms, type TranscriptSchema, type TranscriptLine, type TranscriptWord } from "@incharge/podcast-core"
 
 type EventHandler = (event: Event) => void;
 
@@ -9,32 +10,7 @@ function htmlEncode(input: string): string {
       .replace(/>/g, '&gt;');
 }
 
-
 type LineWord = [lineIndex: number, wordIndex: number];
-
-// interface TranscriptAlternative {
-//   confidence: number;
-//   content: string;
-// }
-
-interface TranscriptWord {
-  //alternatives: Array<TranscriptAlternative>
-  confidence: number;
-  content: string;
-  end_time: number;
-  start_time: number;
-}
-
-interface TranscriptLine {
-    speaker: number;
-    words: Array<TranscriptWord>;
-}
-
-export interface TranscriptSchema {
-  url: string;
-  speakers: Array<string>;
-  lines: Array<TranscriptLine>;
-}
 
 export class ProofreadTranscript {
   protected currentLine: number;
@@ -278,7 +254,7 @@ export class ProofreadTranscript {
 
   getBackgroundColor(lineIndex: number, wordIndex: number) : string {
     const word = this.getWord(lineIndex, wordIndex);
-    let confidence: number = word.confidence;
+    let confidence: number = word.confidence || 0.99;
     if ( confidence === undefined) {
       // punctuation has no confidence property
       return '';
@@ -310,32 +286,6 @@ export class ProofreadDom extends ProofreadTranscript {
     this.prefix = "ic";
   }
 
-  secondsToHms(time: number): string {
-    let from: number;
-    if (time < 60*60){
-      from = 14;
-    }
-    else if (time < 60*60*10) {
-      from = 12;
-    }
-    else {
-      from = 11;
-    }
-
-    return new Date(Math.floor(time) * 1000).toISOString().substring(from, 19)
-  }
-
-  // secondsToHms(time: number): string {
-  //   let remainder: number = Math.floor(time);
-  //   let timeHMS: string = "";
-  //   while (remainder > 0 || timeHMS.length == 0) {
-  //     let unit: number = remainder % 60;
-  //     remainder = Math.floor(remainder / 60);
-  //     timeHMS = (unit <= 9 ? "0" : "") + String(unit) + (timeHMS.length > 0 ? ":" + timeHMS : "");
-  //   }
-  //   return timeHMS;
-  // }
-
   // Set the transcript by passing in the URL of a transcript file or a TranscriptSchema object.
   async load(transcript: string | TranscriptSchema) {
     if ( typeof transcript === "string") {
@@ -366,7 +316,7 @@ export class ProofreadDom extends ProofreadTranscript {
       let html: string = "";
       for (let lineIndex = 0; lineIndex < this.transcript.lines.length; lineIndex++) {
         const offset: number = this.transcript.lines[lineIndex].words[0].start_time;
-        html += `<option value="${offset}">${this.secondsToHms(offset)} ${htmlEncode(this.getSpeakerName(lineIndex))}</option>`;
+        html += `<option value="${offset}">${secondsToHms(offset)} ${htmlEncode(this.getSpeakerName(lineIndex))}</option>`;
       }
       selectElement.innerHTML = html;
     } 
