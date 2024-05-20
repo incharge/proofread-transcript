@@ -501,11 +501,11 @@ export class ProofreadDom extends ProofreadTranscript {
   handeRwFfButton = (event: Event) : void => {
     const buttonElement:HTMLElement | null  = event.target as HTMLElement;
     const audioElement: HTMLAudioElement | null = document.getElementById(this.prefix + "-audio") as HTMLAudioElement;
-    if (audioElement) {
-      const isRw = buttonElement.id == this.prefix + "-rw-btn";
-      const rwInputElement = document.getElementById(this.prefix + (isRw ? "-rw-edit" :"-ff-edit")) as HTMLInputElement;
-      //console.log(rwInputElement.value);
-      const time = audioElement.currentTime + parseInt(rwInputElement.value) * (isRw ? -1 : 1);
+    if (audioElement && buttonElement) {
+      let seconds: number = parseInt(buttonElement.getAttribute("data-seconds") || '');
+      console.log(seconds);
+      seconds = isNaN(seconds) ? (buttonElement.id == this.prefix + "-rw-btn" ? -5 : 15) : seconds;
+      const time = audioElement.currentTime + seconds;
       this.skipTo(time);
     }
   }

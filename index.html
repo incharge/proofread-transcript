@@ -15,10 +15,10 @@
       <div class="mx-auto lg:mx-0">
         <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl mb-6">Proofread a Transcript</h1>
         <input type="edit" id="ic-transcript-url" class="ic-edit"/>&nbsp;<button id="ic-load" class="ic-button">Load transcript</button><br/>
-        <input type="edit" id="ic-offset" class="ic-edit"/>&nbsp;<button id="ic-skip-to-offset" class="ic-button">Skip to (seconds)</button><br/>
-        <input type="edit" id="ic-rw-edit" class="ic-edit" value="5"/>&nbsp;<button id="ic-rw-btn" class="ic-button">Rewind (seconds)</button><br/>
-        <input type="edit" id="ic-ff-edit" class="ic-edit"  value="15"/>&nbsp;<button id="ic-ff-btn" class="ic-button">Forwards (seconds)</button><br/>
+        <!-- <input type="edit" id="ic-offset" class="ic-edit"/>&nbsp;<button id="ic-skip-to-offset" class="ic-button">Skip to (seconds)</button><br/> -->
+        <button id="ic-rw-btn" data-seconds="-5" class="ic-button">-5s</button>
         <button id="ic-prev-line" class="ic-button">Previous line</button>&nbsp;<select id="ic-select-line" class="ic-select"><option>Current line...</option>&nbsp;</select><button id="ic-next-line" class="ic-button">Next line</button>
+        <button id="ic-ff-btn" data-seconds="15" class="ic-button">+15s</button><br/>
         <audio id="ic-audio" style="width: 100%" controls src=""></audio>
         <div id="ic-speaker"><!-- The container for the name of the current speaker --></div>
         <div id="ic-line"><!-- The container for the transcript --></div>
