@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest';
-import { ProofreadFilesystem, TranscriptSchema } from './proofread-transcript';
+import { type TranscriptSchema } from "@incharge/podcast-core"
+import { ProofreadFilesystem } from './proofread-transcript';
 
 const testTranscript: TranscriptSchema = {
     url: "",
@@ -9,26 +10,20 @@ const testTranscript: TranscriptSchema = {
         speaker: 0,
         words: [
           {
-            alternatives: [{
-              confidence: 99,
-              content: "Hello"
-            }],
+            confidence: 99,
+            content: "Hello",
             start_time: 0.5,
             end_time: 1
           },
           {
-            alternatives: [{
-              confidence: 99,
-              content: "there"
-            }],
+            confidence: 99,
+            content: "there",
             start_time: 1.5,
             end_time: 2
           },
           {
-            alternatives: [{
-              confidence: 99,
-              content: "."
-            }],
+            confidence: 99,
+            content: ".",
             start_time: 0,
             end_time: 0
           }
