@@ -14,10 +14,14 @@ export default defineConfig({
             entry: [
                 path.resolve(
                     __dirname,
-                    'lib/proofread-transcript.ts'
+                    'src/index.ts'
+                ),
+                path.resolve(
+                    __dirname,
+                    'src/harness.ts'
                 ),
             ],
-            name: 'proofread-transcript',
+            name: 'transcript-proofreader',
             format: ['es', 'umd'],
             fileName: (format,filename) =>
                 `${filename}.${format}.js`,

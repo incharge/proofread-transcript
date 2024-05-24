@@ -1,19 +1,24 @@
 {
   "compilerOptions": {
     "target": "ES2015",
-    "useDefineForClassFields": true,
     "module": "ES2015",
-    "lib": ["ES2015", "DOM"],
     "moduleResolution": "Node",
-    "strict": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
     "esModuleInterop": true,
-    "noEmit": false,
+    "forceConsistentCasingInFileNames": true,
+
+    "declaration": true,
+    "sourceMap": true,
+
+    "outDir": "./dist/esm",
+
+    "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
-    "skipLibCheck": true,
-    "sourceMap": true
   },
+  "include": [
+    "./src"
+  ]
 }
+
+

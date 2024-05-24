@@ -1,18 +1,18 @@
 {
-  "name": "proofread-transcript",
-  "version": "v0.0.3",
-  "description": "A UI component for proofreading and editing transcripts",
+  "name": "@incharge/transcript-proofreader",
+  "version": "v0.0.4-alpha.1",
+  "description": "Work in progress - A UI component for proofreading and editing transcripts",
   "author": "Julian Price, inCharge Ltd",
   "license": "ISC",
   "type": "module",
-  "main": "./dist/proofread-transcript.umd.js",
-  "module": "./dist/proofread-transcript.es.js",
-  "unpkg": "./dist/proofread-transcript.es.js",
-  "types": "./dist/proofread-transcript.d.ts",
+  "main": "./dist/index.umd.js",
+  "module": "./dist/index.es.js",
+  "unpkg": "./dist/index.es.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/proofread-transcript.es.js",
-      "require": "./dist/proofread-transcript.umd.js"
+      "import": "./dist/index.es.js",
+      "require": "./dist/index.umd.js"
     }
   },
   "dev": "vite --port 4000",
@@ -22,6 +22,7 @@
     "vite-build": "vite build --config vite.demo.config.js",
     "build": "vite build --config vite.demo.config.js && vite build",
     "preview": "vite preview",
+    "link": "npm link @incharge/transcript-core",
     "test": "vitest"
   },
   "files": [
@@ -30,7 +31,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/incharge/proofread-transcript"
+    "url": "git+https://github.com/incharge/transcript-proofreader"
   },
   "devDependencies": {
     "@types/node": "^20.12.12",
@@ -49,8 +50,8 @@
     "editor"
   ],
   "bugs": {
-    "url": "https://github.com/incharge/proofread-transcript/issues"
+    "url": "https://github.com/incharge/transcript-proofreader/issues"
   },
-  "homepage": "https://github.com/incharge/proofread-transcript#readme",
+  "homepage": "https://github.com/incharge/transcript-proofreader#readme",
   "readme": "readme.md"
 }

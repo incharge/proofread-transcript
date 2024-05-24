@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
-import { type TranscriptSchema } from "@incharge/podcast-core"
-import { ProofreadFilesystem } from './proofread-transcript';
+import { type TranscriptSchema } from "@incharge/transcript-core"
+import { ProofreadFilesystem } from './index';
 
 const testTranscript: TranscriptSchema = {
     url: "",

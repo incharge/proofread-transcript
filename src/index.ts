@@ -1,5 +1,5 @@
-import * as fs from 'fs'
-import { secondsToHms, type TranscriptSchema, type TranscriptLine, type TranscriptWord } from "@incharge/podcast-core"
+import fs from 'node:fs/promises';
+import { secondsToHms, type TranscriptSchema, type TranscriptLine, type TranscriptWord } from "@incharge/transcript-core"
 
 type EventHandler = (event: Event) => void;
 
@@ -527,9 +527,10 @@ export class ProofreadDom extends ProofreadTranscript {
 }
 
 export class ProofreadFilesystem extends ProofreadTranscript {
-  load(transcript: string | TranscriptSchema) : void {
+  async load(transcript: string | TranscriptSchema) {
     if ( typeof transcript === "string") {
-      this.transcript = JSON.parse(fs.readFileSync(transcript, 'utf-8'));
+      
+      this.transcript = JSON.parse(await fs.readFile(transcript, 'utf-8'));
       this.loaded();
     }
     else {
