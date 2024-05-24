@@ -1,6 +1,6 @@
 {
   "name": "@incharge/transcript-proofreader",
-  "version": "0.0.4-alpha.1",
+  "version": "0.0.4-alpha.2",
   "description": "Work in progress - A UI component for proofreading and editing transcripts",
   "author": "Julian Price, inCharge Ltd",
   "license": "ISC",
@@ -21,6 +21,7 @@
     "dev": "vite --host 0.0.0.0 --port 8888",
     "vite-build": "vite build --config vite.demo.config.js",
     "build": "vite build --config vite.demo.config.js && vite build",
+    "prepublishOnly": "npm run clean && npm run build",
     "preview": "vite preview",
     "link": "npm link @incharge/transcript-core",
     "test": "vitest"
