@@ -46,4 +46,4 @@ jobs:
       - name: NPM Publish
         uses: JS-DevTools/npm-publish@v1
         with:
-          token: ${{ secrets.NPM_TOKEN_PROOFREAD_TRANSCRIPT }}
+          token: ${{ secrets.NPM_TOKEN_GITHUB_INCHARGE }}
