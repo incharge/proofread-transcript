@@ -4,7 +4,7 @@
  * description: Work in progress - A UI component for proofreading and editing transcripts
  * author: Julian Price, inCharge Ltd
  * repository: git+https://github.com/incharge/transcript-proofreader
- * build date: 2024-05-24T19:56:37.713Z 
+ * build date: 2024-05-24T20:07:22.672Z 
  */
 "use strict";
 Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
