@@ -1,16 +1,12 @@
 /**
  * name: @incharge/transcript-proofreader
- * version: vv0.0.4-alpha.1
+ * version: v0.0.4-alpha.4
  * description: Work in progress - A UI component for proofreading and editing transcripts
  * author: Julian Price, inCharge Ltd
  * repository: git+https://github.com/incharge/transcript-proofreader
- * build date: 2024-05-24T17:27:50.374Z 
+ * build date: 2024-05-24T19:56:37.713Z 
  */
-const fs = new Proxy({}, {
-  get(_, key) {
-    throw new Error(`Module "node:fs/promises" has been externalized for browser compatibility. Cannot access "node:fs/promises.${key}" in client code.  See https://vitejs.dev/guide/troubleshooting.html#module-externalized-for-browser-compatibility for more details.`);
-  }
-});
+const fs = {};
 (function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve) {
