@@ -1,39 +1,32 @@
 /**
  * name: @incharge/transcript-proofreader
- * version: v0.0.4-alpha.4
  * description: Work in progress - A UI component for proofreading and editing transcripts
  * author: Julian Price, inCharge Ltd
  * repository: git+https://github.com/incharge/transcript-proofreader
- * build date: 2024-05-24T19:56:37.713Z 
  */
-const fs = {};
-(function(thisArg, _arguments, P, generator) {
-  function adopt(value) {
-    return value instanceof P ? value : new P(function(resolve) {
-      resolve(value);
-    });
+const fs = new Proxy({}, {
+  get(_, key) {
+    throw new Error(`Module "node:fs/promises" has been externalized for browser compatibility. Cannot access "node:fs/promises.${key}" in client code.  See https://vitejs.dev/guide/troubleshooting.html#module-externalized-for-browser-compatibility for more details.`);
   }
-  return new (P || (P = Promise))(function(resolve, reject) {
-    function fulfilled(value) {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    }
-    function rejected(value) {
-      try {
-        step(generator["throw"](value));
-      } catch (e) {
-        reject(e);
-      }
-    }
-    function step(result) {
-      result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
-    }
-    step((generator = generator.apply(thisArg, _arguments || [])).next());
-  });
 });
+function htmlEncode(input) {
+  return input.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+function wordBackgroundColor(word, isCurrent = false) {
+  let confidence = word.confidence || 0.99;
+  if (word.end_time === void 0) {
+    return "";
+  } else if (isCurrent)
+    return "#FFFF33";
+  else if (confidence > 0.99) {
+    return "";
+  } else {
+    const minimumColor = 99;
+    confidence = Math.floor(confidence * (256 - minimumColor)) + minimumColor;
+    const color = (confidence < 16 ? "0" : "") + confidence.toString(16);
+    return "#FF" + color + color;
+  }
+}
 function secondsToHms(time) {
   let from;
   if (time == void 0) {
@@ -48,9 +41,11 @@ function secondsToHms(time) {
   }
   return new Date(Math.floor(time) * 1e3).toISOString().substring(from, 19);
 }
-function htmlEncode(input) {
-  return input.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
+new Proxy({}, {
+  get(_, key) {
+    throw new Error(`Module "node:fs/promises" has been externalized for browser compatibility. Cannot access "node:fs/promises.${key}" in client code.  See https://vitejs.dev/guide/troubleshooting.html#module-externalized-for-browser-compatibility for more details.`);
+  }
+});
 class ProofreadTranscript {
   constructor() {
     this.getCurrentLineWords = () => {
@@ -241,19 +236,7 @@ class ProofreadTranscript {
   }
   getBackgroundColor(lineIndex, wordIndex) {
     const word = this.getWord(lineIndex, wordIndex);
-    let confidence = word.confidence || 0.99;
-    if (confidence === void 0) {
-      return "";
-    } else if (this.isCurrent(lineIndex, wordIndex))
-      return "#FFFF33";
-    else if (confidence > 0.99) {
-      return "";
-    } else {
-      const minimumColor = 99;
-      confidence = Math.floor(confidence * (256 - minimumColor)) + minimumColor;
-      const color = (confidence < 16 ? "0" : "") + confidence.toString(16);
-      return "#FF" + color + color;
-    }
+    return wordBackgroundColor(word, this.isCurrent(lineIndex, wordIndex));
   }
 }
 class ProofreadDom extends ProofreadTranscript {

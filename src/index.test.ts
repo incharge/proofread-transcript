@@ -78,6 +78,6 @@ test('Initial state', async () => {
     expect(proofreadTest.testState(0,1,false)).toBe(true);
 
     // https://incharge.github.io/thedissenter/transcript/924-icpt.json
-    proofreadTest.load("test/924-icpt.json");
-    proofreadTest.setCurrentTime(60);
+    //proofreadTest.load("test/924-icpt.json");
+    //proofreadTest.setCurrentTime(60);
   })

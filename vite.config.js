@@ -30,7 +30,7 @@ export default defineConfig({
     },
     plugins: [
         banner(
-            `/**\n * name: ${pkg.name}\n * version: v${pkg.version}\n * description: ${pkg.description}\n * author: ${pkg.author}\n * repository: ${pkg.repository.url}\n * build date: ${now} \n */`
+            `/**\n * name: ${pkg.name}\n * description: ${pkg.description}\n * author: ${pkg.author}\n * repository: ${pkg.repository.url}\n */`
         ),
         dts({
             insertTypesEntry: true,
