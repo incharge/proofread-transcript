@@ -1,14 +1,7 @@
 import fs from 'node:fs/promises';
-import { secondsToHms, type TranscriptSchema, type TranscriptLine, type TranscriptWord } from "@incharge/transcript-core"
+import { htmlEncode, secondsToHms, wordBackgroundColor, type TranscriptSchema, type TranscriptLine, type TranscriptWord } from "@incharge/transcript-core"
 
 type EventHandler = (event: Event) => void;
-
-function htmlEncode(input: string): string {
-  return input
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
-}
 
 type LineWord = [lineIndex: number, wordIndex: number];
 
@@ -254,27 +247,7 @@ export class ProofreadTranscript {
 
   getBackgroundColor(lineIndex: number, wordIndex: number) : string {
     const word = this.getWord(lineIndex, wordIndex);
-    let confidence: number = word.confidence || 0.99;
-    if ( confidence === undefined) {
-      // punctuation has no confidence property
-      return '';
-    }
-    else if (this.isCurrent(lineIndex, wordIndex))
-      // Higlight the current word
-      return "#FFFF33";
-    else if (confidence > 0.99 ) {
-      // Normal confidence has the default background color
-      return '';
-    }
-    else {
-      // Calculate a color that represents the confidence level 
-      const minimumColor = 99;
-      // Convert confidence into a color number in the range 0 to 255
-      confidence = Math.floor(confidence * (256-minimumColor)) + minimumColor;
-      // Convert confidence into a 2 digit hex color value
-      const color: string = (confidence < 16 ? "0" : "") + confidence.toString(16);
-      return "#" + "FF" + color + color;
-    }
+    return wordBackgroundColor(word, this.isCurrent(lineIndex, wordIndex));
   }
 }
 
