@@ -307,6 +307,19 @@ export class ProofreadDom extends ProofreadTranscript {
     this.prefix = prefix;
     let element: HTMLElement | null;
 
+    const el = document.getElementById(prefix + "-transcript-url") as HTMLInputElement;
+    if (el) {
+        // There's a url field, so get/set the URL.
+        if (url) {
+            // Overwrite the default value with the parameter
+            el.value = url;
+        }
+        else if (el.value) {
+            // Use the default value
+            url = el.value;
+        }
+    }
+    
     // Load the audo first, so it can load asynchronously while the rest of the attaching happens
     element = document.getElementById(this.prefix + "-audio") as HTMLAudioElement;
     if ( element ) {
@@ -324,15 +337,6 @@ export class ProofreadDom extends ProofreadTranscript {
     this.attachButton("-next-line", this.handleLineButton);
     this.attachButton("-rw-btn", this.handeRwFfButton);
     this.attachButton("-ff-btn", this.handeRwFfButton);
-
-    // Set the URL in the URL edit box, if any
-    if (url) {
-      element = document.getElementById(prefix + "-transcript-url");
-      if (element) {
-        //console.log(`url=${url}`);
-        (element as HTMLInputElement).value = url;
-      }
-    }
 
     // Set the select onchange handler
     element = document.getElementById(this.prefix + "-select-line");
